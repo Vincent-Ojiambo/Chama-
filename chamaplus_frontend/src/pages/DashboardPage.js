@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from '../App';
 import {
   Briefcase,
   Wallet,
@@ -8,10 +9,12 @@ import {
   Coins,
   PlusCircle,
   DollarSign,
+  BarChart2,
 } from "lucide-react";
 import StatCard from "../components/StatCard"; // Adjust path if needed
 
 function DashboardPage() {
+  const { currentUser: authUser } = useAuth();
   const overviewStats = [
     { icon: <Briefcase />, title: "Active Chamas", value: "3" },
     { icon: <Users />, title: "Total Members", value: "35" },
@@ -37,24 +40,6 @@ function DashboardPage() {
     },
   ];
 
-  const quickActions = [
-    {
-      label: "Create New Chama",
-      icon: <PlusCircle />,
-    },
-    {
-      label: "View My Chamas",
-      icon: <Briefcase />,
-    },
-    {
-      label: "Apply for a Loan",
-      icon: <DollarSign />,
-    },
-    {
-      label: "Schedule Meeting",
-      icon: <Calendar />,
-    },
-  ];
 
   const chamaStats = [
     { id: 1, title: "Mwanzo Chama", totalFunds: "KSH 145,000", members: "12", description: "This is a savings group.", created: "January 1, 2022" },
@@ -68,6 +53,8 @@ function DashboardPage() {
   const handleQuickAction = (action) => {
     switch (action) {
       case "Create New Chama":
+        navigate("/admin/chamas/new");
+        break;
       case "View My Chamas":
         navigate("/my-chamas");
         break;
@@ -77,10 +64,37 @@ function DashboardPage() {
       case "Schedule Meeting":
         navigate("/meetings");
         break;
+      case "View Statistics":
+        navigate("/statistics");
+        break;
       default:
         break;
     }
   };
+
+  // Check if user has admin role to show Create New Chama action
+  const quickActions = [
+    ...(authUser?.role === 'admin' ? [{
+      label: "Create New Chama",
+      icon: <PlusCircle />,
+    }] : []),
+    {
+      label: "View My Chamas",
+      icon: <Briefcase />,
+    },
+    {
+      label: "Apply for a Loan",
+      icon: <DollarSign />,
+    },
+    {
+      label: "Schedule Meeting",
+      icon: <Calendar />,
+    },
+    {
+      label: "View Statistics",
+      icon: <BarChart2 />,
+    },
+  ];
 
   return (
     <div className="h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-100">
@@ -107,7 +121,21 @@ function DashboardPage() {
         {/* Overview Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {overviewStats.map((stat, i) => (
-            <div key={i} className="bg-gradient-to-br from-green-100 via-blue-100 to-purple-100 rounded-2xl shadow-md p-6 flex flex-col items-center text-center hover:shadow-xl transition-shadow group relative overflow-hidden">
+            <div 
+              key={i} 
+              className="bg-gradient-to-br from-green-100 via-blue-100 to-purple-100 rounded-2xl shadow-md p-6 flex flex-col items-center text-center hover:shadow-xl transition-shadow group relative overflow-hidden cursor-pointer"
+              onClick={() => {
+                if (stat.title === 'Active Chamas') {
+                  navigate('/my-chamas');
+                } else if (stat.title === 'Total Members') {
+                  navigate('/my-chamas');
+                } else if (stat.title === 'Total Funds') {
+                  navigate('/contributions');
+                } else if (stat.title === 'Upcoming Meetings') {
+                  navigate('/meetings');
+                }
+              }}
+            >
               <div className="mb-3 p-3 rounded-full bg-gradient-to-tr from-green-300 via-blue-200 to-purple-200 group-hover:scale-110 transition-transform">
                 <span className="text-green-700 text-2xl">{stat.icon}</span>
               </div>
@@ -154,7 +182,16 @@ function DashboardPage() {
             {recentActivities.map((activity, i) => (
               <div
                 key={i}
-                className="bg-white/5 rounded-xl p-6 hover:bg-white/10 transition-colors duration-300 group relative"
+                className="bg-white/5 rounded-xl p-6 hover:bg-white/10 transition-colors duration-300 group relative cursor-pointer"
+                onClick={() => {
+                  if (activity.type === 'Contribution Received') {
+                    navigate('/contributions');
+                  } else if (activity.type === 'Loan Approved') {
+                    navigate('/loans');
+                  } else if (activity.type === 'Meeting Scheduled') {
+                    navigate('/meetings');
+                  }
+                }}
               >
                 <div className="flex items-start gap-4">
                   {/* Activity Type Badge */}

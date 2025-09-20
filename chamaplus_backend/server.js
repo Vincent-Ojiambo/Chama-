@@ -14,10 +14,19 @@ import chamaRoutes from './routes/chamaRoutes.js';
 import loanRoutes from './routes/loanRoutes.js';
 import adminMeetingRoutes from './routes/adminMeetingRoutes.js';
 
-
 // Initialize express app
 const app = express();
 const port = process.env.PORT || 5000;
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 
 // Load environment variables
 dotenv.config();
@@ -25,19 +34,40 @@ dotenv.config();
 // Create HTTP server
 const server = http.createServer(app);
 
-// Basic CORS configuration
+// CORS configuration
 const corsOptions = {
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001',
-    'https://chamaplus-frontend.vercel.app',
-    'https://chamaplus-frontend-*.vercel.app',
-    'https://chamaplus-frontend-git-main-vincent-ojiambos-projects.vercel.app',
-    'https://chamaplus-frontend-rd28ncafg-vincent-ojiambos-projects.vercel.app',
-    'https://chamaplus-frontend-hwm52exlo-vincent-ojiambos-projects.vercel.app'
-  ],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      // Development
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:3001',
+      
+      // Production - Vercel
+      'https://chamaplus.vercel.app',
+      'https://www.chamaplus.vercel.app',
+      'https://chamaplus-frontend.vercel.app',
+      'https://chamaplus-frontend-*.vercel.app',
+      'https://chamaplus-frontend-git-main-vincent-ojiambos-projects.vercel.app',
+      'https://chamaplus-frontend-rd28ncafg-vincent-ojiambos-projects.vercel.app',
+      'https://chamaplus-frontend-hwm52exlo-vincent-ojiambos-projects.vercel.app'
+    ];
+    
+    if (allowedOrigins.some(allowedOrigin => 
+      origin === allowedOrigin || 
+      allowedOrigin.includes('*') && 
+      new RegExp('^' + allowedOrigin.replace(/\*/g, '.*') + '$').test(origin)
+    )) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Not allowed by CORS: ${origin}`));
+    }
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',

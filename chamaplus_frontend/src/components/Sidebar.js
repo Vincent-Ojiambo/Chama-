@@ -56,6 +56,12 @@ function Sidebar({ sidebarMinimized, setSidebarMinimized, isMobile = false, side
     menuItems = memberMenuItems;
   }
 
+  // Check if current path matches menu item path
+  const isActive = (path) => {
+    return location.pathname === path || 
+           (path !== '/' && location.pathname.startsWith(path) && location.pathname.charAt(path.length) === '/');
+  };
+
   return (
     <aside
       className={`flex flex-col ${isMobile ? "w-56 h-full bg-gradient-to-b from-green-400 via-blue-300 to-purple-300 border-none fixed left-0 top-0 bottom-0 pt-16 z-50 shadow-2xl" : `${sidebarMinimized ? "w-20" : "w-56"} bg-gradient-to-b from-green-100 via-blue-50 to-purple-50 border-r border-gray-200 fixed left-0 top-16 bottom-0 pt-6 rounded-tr-3xl shadow-xl z-20`} ${className}`}
@@ -100,56 +106,73 @@ function Sidebar({ sidebarMinimized, setSidebarMinimized, isMobile = false, side
           </button>
         </div>
       )}
-      <nav className={`flex-1 ${isMobile ? "mt-2" : "mt-8"}`}>
-        <ul className="space-y-1">
-          {menuItems.map((item) => (
-            <li key={item.name}>
-              <button
-                onClick={() => {
-                  navigate(item.path);
-                  if (isMobile && sidebarOpen) {
-                    onToggle(false);
-                  }
-                }}
-                className={`flex items-center ${sidebarMinimized && !isMobile ? "justify-center px-0" : "px-6 justify-start"} py-3 w-full text-left rounded-2xl group focus:outline-none focus:ring-2 focus:ring-green-300
-                  ${
-                    location.pathname.startsWith(item.path)
-                      ? "bg-gradient-to-r from-green-200 via-blue-100 to-purple-100 text-green-700 font-bold shadow-lg border-l-4 border-green-500"
-                      : isMobile
-                        ? "text-white/90 hover:bg-white/10 hover:text-white"
-                        : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                  }
-                `}
-                aria-current={location.pathname === item.path ? 'page' : undefined}
-              >
-                <span className={`text-xl group-hover:scale-110 transition-none ${location.pathname.startsWith(item.path) ? (isMobile ? "text-white" : "text-green-700") : (isMobile ? "text-white/70" : "text-gray-400")}`}>{item.icon}</span>
-                {(!sidebarMinimized || isMobile) && <span className="truncate ml-3 text-base font-semibold">{item.label}</span>}
-              </button>
-            </li>
-          ))}
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-2">
+        <ul className="space-y-2">
+          {menuItems.map((item) => {
+            const active = isActive(item.path);
+            return (
+              <li key={item.name}>
+                <button
+                  onClick={() => {
+                    navigate(item.path);
+                    if (isMobile) onToggle(false);
+                  }}
+                  className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    active
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md transform hover:scale-[1.02]'
+                      : 'text-gray-700 hover:bg-white/80 hover:text-blue-600 hover:shadow-sm'
+                  }`}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  <span className={`flex items-center justify-center w-6 h-6 rounded-full ${active ? 'bg-white/20' : ''}`}>
+                    {React.cloneElement(item.icon, {
+                      className: active ? 'text-white' : 'text-current',
+                      size: 20
+                    })}
+                  </span>
+                  {!sidebarMinimized && (
+                    <span className="ml-3 text-left truncate">
+                      {item.label}
+                    </span>
+                  )}
+                  {active && !sidebarMinimized && (
+                    <span className="ml-auto w-2 h-2 rounded-full bg-white/80"></span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </nav>
-      <div className="mt-auto pb-6 px-6">
-        <button
-          onClick={async () => {
-            try {
-              // Wait for logout to complete
-              await logout();
-              // Then navigate to the landing page
-              window.location.href = '/';
-            } catch (error) {
-              console.error('Logout error:', error);
-              // Still navigate even if there's an error
-              window.location.href = '/';
-            }
-          }}
-          className={`flex items-center w-full justify-center py-3 text-white font-bold rounded-xl bg-gradient-to-r from-green-700 via-blue-700 to-purple-700 shadow-lg hover:opacity-90 transition-all focus:outline-none focus:ring-2 focus:ring-white`}
-        >
-          <span className="text-xl">
+      
+      <div className="mt-auto p-4 border-t border-gray-200">
+        <div className={`flex items-center ${sidebarMinimized ? 'justify-center' : 'justify-between'}`}>
+          {!sidebarMinimized && (
+            <div className="flex items-center">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                {currentUser?.name?.charAt(0) || 'U'}
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-900 truncate max-w-[120px]">
+                  {currentUser?.name || 'User'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {isAdmin ? 'Admin' : 'Member'}
+                </p>
+              </div>
+            </div>
+          )}
+          <button
+            onClick={logout}
+            className={`flex items-center text-red-600 hover:text-red-700 transition-colors duration-200 ${
+              !sidebarMinimized ? 'p-1 hover:bg-red-50 rounded-full' : ''
+            }`}
+            title="Logout"
+          >
             <LogOut size={20} />
-          </span>
-          {(!sidebarMinimized || isMobile) && <span className="ml-3">Logout</span>}
-        </button>
+            {!sidebarMinimized && <span className="ml-2 text-sm font-medium">Logout</span>}
+          </button>
+        </div>
       </div>
     </aside>
   );

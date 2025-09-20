@@ -318,7 +318,7 @@ function MyChamasPage() {
                 </div>
               </div>
               <Link 
-                to={`/chama-details/${chama.id}`}
+                to={`/chamas/${chama.id}`}
                 state={{ chama }}
                 className="mt-auto text-white bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 px-4 py-2 rounded-lg font-semibold shadow focus:outline-none focus:ring-2 focus:ring-green-300 transition-all"
               >

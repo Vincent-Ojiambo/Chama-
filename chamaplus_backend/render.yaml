@@ -2,8 +2,10 @@ services:
   - type: web
     name: chamaplus-backend
     env: node
+    region: singapore  # Choose a region closest to your users
     buildCommand: npm install
     startCommand: npm start
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
@@ -11,7 +13,20 @@ services:
         value: 10000
       - key: MONGODB_URI
         required: true
+        description: "MongoDB Atlas connection string (e.g., mongodb+srv://user:password@cluster.mongodb.net/chamaplus?retryWrites=true&w=majority)"
       - key: JWT_SECRET
         required: true
+        generateValue: true
+      - key: JWT_EXPIRE
+        value: 30d
       - key: NODE_ENV
         value: production
+      - key: ALLOWED_ORIGINS
+        value: "https://your-frontend-domain.vercel.app"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000  # 15 minutes
+      - key: RATE_LIMIT_MAX
+        value: 100
+    healthCheckPath: /api/health
+    plan: free
+    numInstances: 1
